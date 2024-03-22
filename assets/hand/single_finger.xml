@@ -1,0 +1,25 @@
+<mujoco>
+ <option gravity="0 0 0" />
+  <worldbody>
+    <light diffuse=".5 .5 .5" pos="0 0 10" dir="0 0 -1"/>
+    <geom type="plane" size=".5 .5 1.0" rgba="1 1 1 0.8"/>
+    
+    <body name="palm" pos="0 0 0">
+        <geom name="palm" pos="0 0 .0" type="cylinder" size=".10 .0400" rgba=".25 .25 1 1"/>
+        <body name="finger1" pos="-.1350 0 .0275" euler="0 0 90">
+            <geom name="fing1base" type="cylinder" pos="0 0 -.0375" size=".025 .0375" rgba=".25 .25 1 1"/>
+            <body name="proxLink1" pos="0 0 0" euler="-60 0 0" >
+                <joint name="proxPitch1" axis="1 0 0" limited="true" range="0 120"/>  
+                <geom name="proxLink1" type="capsule" size=".025 .060" pos="0 0 .060" rgba="1 .25 .25 1"/>
+                <body name="distLink1" pos="0 0 .12">
+                    <joint name="distPitch1" axis="1 0 0" limited="true" range="0 120"/> 
+                    <geom name="distLink1" type="capsule" size=".025 .045" pos="0 0 .045" rgba=".25 1 .25 1"/>
+                        <body name="ftip1" euler="0 0 -90" pos="0 0 .06">
+                        </body> 
+                </body>
+            </body>
+        </body>
+    </body>
+
+  </worldbody>
+</mujoco>
