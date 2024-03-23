@@ -34,14 +34,13 @@ class CollisionTest(VecTask):
         self.default_effort_limit = self.cfg["env"]["default"]["effortLimit"]
 
         super().__init__(config=self.cfg, sim_device=sim_device, graphics_device_id=graphics_device_id, headless=headless)
-        
+
         if self.viewer is not None:
             cam_pos = gymapi.Vec3(0.5, 0.5, 0.3)
             cam_target = gymapi.Vec3(0.0, 0.0, 0.0)
             self.gym.viewer_camera_look_at(self.viewer, None, cam_pos, cam_target)
             
         self.max_episode_length = self.cfg["env"]["episodeLength"]
-        self.action_scale = torch.tensor(self.cfg["env"]["action_scale"], device = self.device).repeat(self.num_joints)
 
         self.default_hand_joint_pos = to_torch(self.cfg["env"]["default_hand_joint_pos"], device=self.device)
 
@@ -50,14 +49,14 @@ class CollisionTest(VecTask):
         self.create_tensor_views()
         self.gym.simulate(self.sim)
         self._refresh_tensors()
-        
+
     def _setup_states_obs_actions_dims(self):
         dims = {
             "hand_joint_pos": self.num_joints, 
             "hand_joint_vel":  self.num_joints, 
             "hand_joint_target":  self.num_joints, 
-            "all_contact": 3*(self.num_joints+1), # Assume only finger tips and thumbproxlink have tactile sensors (including the thumb)
-            "hand_joint_torque":  self.num_joints, # Assume every joint has torque sensing
+            "all_contact": 3*(self.num_joints+1), 
+            "hand_joint_torque":  self.num_joints,
         }
         self.cfg["env"]["numStates"] = sum([dims[key] for key in self.cfg["env"]["feedbackState"]])
         self.obs_hist_len = self.cfg["env"]["obsHistoryLen"]
@@ -97,6 +96,13 @@ class CollisionTest(VecTask):
         self.num_hand_dofs = self.gym.get_asset_dof_count(hand_asset)
         self.num_actuators = self.gym.get_asset_actuator_count(hand_asset)
         hand_dof_props = self.gym.get_asset_dof_properties(hand_asset) 
+
+        # remove bodies without joints
+        for name in self.hand_body_names[:]: 
+            if name.startswith("fing") or name.startswith("ftip"):
+                self.hand_body_names.remove(name)
+    
+        self.action_scale = torch.tensor(self.cfg["env"]["action_scale"], device = self.device).repeat(self.num_hand_dofs)
 
         self.finger_dof_lower_limits = list(self.cfg["env"]["joint_limits"]["finger_joint_lower_lim"]) * (self.num_fingers)
         self.finger_dof_upper_limits = list(self.cfg["env"]["joint_limits"]["finger_joint_upper_lim"]) * (self.num_fingers)
@@ -152,9 +158,8 @@ class CollisionTest(VecTask):
 
         self.rigid_body_handles = {}
         
-        self.rigid_body_handles["proxLink1"] = self.gym.find_actor_rigid_body_handle(env_ptr, self.actor_handles["hand"][0], "proxLink1")
-        self.rigid_body_handles["distLink1"] = self.gym.find_actor_rigid_body_handle(env_ptr, self.actor_handles["hand"][0], "distLink1")
-        self.rigid_body_handles["palm"] = self.gym.find_actor_rigid_body_handle(env_ptr, self.actor_handles["hand"][0], "palm")
+        for body_names in self.hand_body_names:
+            self.rigid_body_handles[body_names] = self.gym.find_actor_rigid_body_handle(env_ptr, self.actor_handles["hand"][0], body_names)
 
         num_actors_per_env = 1
         self.actor_idx = torch.arange(self.num_envs * num_actors_per_env, dtype=torch.int32, device=self.device).view(self.num_envs, -1)
@@ -188,10 +193,10 @@ class CollisionTest(VecTask):
 
         self.hand_dof_pos = self.dof_state[..., 0]
         self.hand_dof_vel = self.dof_state[..., 1]
-
-        self.all_contact = [self.contact_force[:, self.rigid_body_handles["distLink1"], :]] \
-            + [self.contact_force[:, self.rigid_body_handles["proxLink1"], :]] \
-            + [self.contact_force[:, self.rigid_body_handles["palm"], :]]
+        
+        self.all_contact = []
+        for body_name in self.hand_body_names:
+            self.all_contact += [self.contact_force[:, self.rigid_body_handles[body_name], :]]
         
         self.target_hand_joint_pos = self.hand_dof_pos.clone().detach()
 
@@ -233,13 +238,14 @@ class CollisionTest(VecTask):
 
     def compute_contact_bool(self):
         force_scalar = [torch.linalg.norm(force, dim=1) for force in self.all_contact]
+        # print(force_scalar)
         contact = [(force > 0).long() for force in force_scalar]
-        contact_bool_tensor = torch.transpose(torch.stack(contact), 0, 1)
         contact_bool_tensor = torch.transpose(torch.stack(contact), 0, 1)
         return contact_bool_tensor
 
     def compute_observation(self):
         self.contact_bool_tensor = self.compute_contact_bool()
+        print(self.contact_bool_tensor)
         feeback = {
             "hand_joint_pos": self.hand_dof_pos,
             "hand_joint_vel": self.hand_dof_vel,

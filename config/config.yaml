@@ -5,9 +5,9 @@ graphics_device_id: 0
 
 env:
   numEnvs: 1
-  num_fingers: 1
-  num_joints: 2
-  default_hand_joint_pos: [0.1, 0.1]
+  num_fingers: 2
+  num_joints: 4
+  default_hand_joint_pos: [0.1, 0.1, 0.1, 0.1]
   action_scale: 0.1
   joint_limits: 
     finger_joint_lower_lim: [-0.5, 0.01]
@@ -58,4 +58,4 @@ sim:
     bounce_threshold_velocity: 0.2
     max_depenetration_velocity: 1000.0
     default_buffer_size_multiplier: 5.0
-    contact_collection: 1 # 0: CC_NEVER (don't collect contact info), 1: CC_LAST_SUBSTEP (collect only contacts on last substep), 2: CC_ALL_SUBSTEPS (default - all contacts)
+    contact_collection: 2 # 0: CC_NEVER (don't collect contact info), 1: CC_LAST_SUBSTEP (collect only contacts on last substep), 2: CC_ALL_SUBSTEPS (default - all contacts)

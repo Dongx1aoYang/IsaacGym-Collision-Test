@@ -1,0 +1,77 @@
+physics_engine: physx
+sim_device: cpu
+rl_device: cuda:0
+graphics_device_id: 0
+env:
+  numEnvs: 1
+  num_fingers: 1
+  num_joints: 2
+  default_hand_joint_pos:
+  - 0.1
+  - 0.1
+  action_scale: 0.1
+  joint_limits:
+    finger_joint_lower_lim:
+    - -0.5
+    - 0.01
+    finger_joint_upper_lim:
+    - 2.0
+    - 1.5
+  default:
+    mass: 0.12
+    COM:
+    - 0.0
+    - 0.0
+    - 0.0
+    friction: 0.3
+    scale: 1
+    calibrationError: 0.0
+    stiffness: 30
+    damping: 2
+    velocityLimit: 0.6
+    effortLimit: 0.5
+    jointFriction: 0.0
+  aim:
+    propHistoryLen: 30
+  obsHistoryLen: 1
+  rotationAxis: 2
+  envSpacing: 0.75
+  episodeLength: 300
+  enableDebugVis: false
+  aggregateMode: 1
+  controlFrequencyInv: 1
+  clipObservations: 5.0
+  clipActions: 1.0
+  contactBoolForceThreshold: 0.5
+  feedbackObs:
+  - hand_joint_pos
+  - hand_joint_target
+  - all_contact
+  feedbackState:
+  - hand_joint_pos
+  - hand_joint_target
+  - hand_joint_torque
+  - all_contact
+sim:
+  dt: 0.05
+  substeps: 3
+  up_axis: z
+  use_gpu_pipeline: false
+  gravity:
+  - 0.0
+  - 0.0
+  - -9.81
+  physx:
+    num_threads: 4
+    solver_type: 1
+    use_gpu: true
+    num_position_iterations: 8
+    num_velocity_iterations: 0
+    max_gpu_contact_pairs: 8388608
+    num_subscenes: 0
+    contact_offset: 0.002
+    rest_offset: 0.0
+    bounce_threshold_velocity: 0.2
+    max_depenetration_velocity: 1000.0
+    default_buffer_size_multiplier: 5.0
+    contact_collection: 1
